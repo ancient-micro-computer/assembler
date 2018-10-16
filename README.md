@@ -1,1 +1,1 @@
-# assembler
+# Š„‚Æ“‚¢ì‚è‚Ìassembler
