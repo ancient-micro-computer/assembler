@@ -1,8 +1,11 @@
+#include <iostream>
 #include "assembler.h"
 #include "lib.h"
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
+
+using namespace std;
 
 extern char aryVars[512][1024];
 
@@ -136,10 +139,11 @@ int main(int argc, char **argv){
 
 	strcpy_s(filename, 1024, FILE_NAME);
 
-	printf("Virtual CPU Assembler for CPU Board Simulator Version 1.00 %s\n", argv[0]);
+	printf("Virtual CPU Assembler for CPU Board Simulator Version 1.00 %d %s\n", argc, argv[0]);
 	if(argc < 2) {
 		printf("アセンブルするファイル名を入力してください。 \n");
 		scanf("%s", filename);
+		printf("ファイル名: %s\n", filename);
 	} else {
 		printf("ファイル名: %s\n", argv[1]);
 		strcpy_s(filename, 1024, argv[1]);
@@ -148,7 +152,7 @@ int main(int argc, char **argv){
 
 	//ファイルオープン
 	if((fp = fopen(filename,"r")) != 0 ){
-		printf("ファイルオープンに失敗しました。");
+		printf("ファイルオープンに失敗しました。\n");
 		return -1;
 	}
 	log(LOG_INFO,"file open OK\n");
@@ -165,7 +169,7 @@ int main(int argc, char **argv){
 
 	//ファイルオープン
 	if((fp = fopen(filename,"w")) != 0 ){
-		printf("ファイルオープンに失敗しました。");
+		printf("ファイルオープンに失敗しました。\n");
 		return -2;
 	}
 
