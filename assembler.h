@@ -89,7 +89,6 @@ typedef struct register_name{
 
 using namespace std;
 
-int asmmain(int argc, char *fn);
 char*	get_infilename();
 char*	get_outfilename();
 
