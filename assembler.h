@@ -11,20 +11,20 @@
 #define	REG_TYPE_SPECIAL	0	
 #define	REG_TYPE_GENERAL	1
 
-//’†ŠÔƒf[ƒ^@ƒL[ƒ[ƒh‹L˜^”
-#define LABEL_LIST_MAX	2048	// Å‘å2048ƒ‰ƒxƒ‹&ƒ}ƒNƒ‚Ì‹L˜^
+//ä¸­é–“ãƒ‡ãƒ¼ã‚¿ã€€ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰è¨˜éŒ²æ•°
+#define LABEL_LIST_MAX	2048	// æœ€å¤§2048ãƒ©ãƒ™ãƒ«&ãƒã‚¯ãƒ­ã®è¨˜éŒ²
 
-//ƒ\[ƒX1s‚ÌÅ‘å•¶š”
+//ã‚½ãƒ¼ã‚¹1è¡Œã®æœ€å¤§æ–‡å­—æ•°
 #define STRING_LEN		2048
 
-//ƒ}ƒNƒ‚ÌÄ‹A“IQÆ‚ÌÅ‘å”
+//ãƒã‚¯ãƒ­ã®å†å¸°çš„å‚ç…§ã®æœ€å¤§æ•°
 #define MACRO_MAX_RECURSIVE_REFER	128
 
-//ƒ}ƒVƒ“ƒR[ƒhÅ‘åŠi”[
+//ãƒã‚·ãƒ³ã‚³ãƒ¼ãƒ‰æœ€å¤§æ ¼ç´
 #define MACHINE_CODE_LIST_MAX	65536
 #define MC_BUFF_MAX				10;
 
-//ƒ}ƒVƒ“ƒR[ƒhí•Ê
+//ãƒã‚·ãƒ³ã‚³ãƒ¼ãƒ‰ç¨®åˆ¥
 #define TYPE_LABEL_DEF	10
 #define TYPE_LABEL_REF	11
 #define TYPE_OPERATION	12
@@ -34,7 +34,7 @@
 #define TYPE_VAL		16
 #define TYPE_FAKE_OP	17
 
-//ƒGƒ‰[ƒR[ƒh
+//ã‚¨ãƒ©ãƒ¼ã‚³ãƒ¼ãƒ‰
 #define FILE_OPEN_ERROR		-1
 #define OP_CODE_ERROR		-2
 #define OP_PARAM_ERROR		-3
@@ -48,37 +48,37 @@
 #define SYSTEM_ERROR		-99
 
 // ------------------------------
-// \‘¢‘Ì’è‹`
+// æ§‹é€ ä½“å®šç¾©
 // ------------------------------
 // ------------------------------
-// ƒ‰ƒxƒ‹
+// ãƒ©ãƒ™ãƒ«
 // ------------------------------
 typedef struct label_element{
-		char				label_name[128];		//ƒ‰ƒxƒ‹–¼
-		int					addr;					//ƒRƒ“ƒpƒCƒ‹Œ‹‰Ê‚Ö‚ÌƒAƒhƒŒƒX
-		char				macro[512];				//ƒ}ƒNƒ’l
+		char				label_name[128];		//ãƒ©ãƒ™ãƒ«å
+		int					addr;					//ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«çµæœã¸ã®ã‚¢ãƒ‰ãƒ¬ã‚¹
+		char				macro[512];				//ãƒã‚¯ãƒ­å€¤
 } ST_LABEL_ELEMENT;
 
 
 // ------------------------------
-// ƒj[ƒ‚ƒjƒbƒN
+// ãƒ‹ãƒ¼ãƒ¢ãƒ‹ãƒƒã‚¯
 // ------------------------------
 typedef struct mnemonic{
-	char *op_code_name;								//ƒIƒyƒŒ[ƒVƒ‡ƒ“–¼
-	int len;										//–½—ßŒê’·
-	char *param;									//ˆø”ƒpƒ^[ƒ“r, v, a, m,irFƒŒƒWƒXƒ^ vF‘¦’l aFƒAƒhƒŒƒX mFƒƒ‚ƒŠj
+	const char *op_code_name;						//ã‚ªãƒšãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³å
+	int len;										//å‘½ä»¤èªé•·
+	const char *param;								//å¼•æ•°ãƒ‘ã‚¿ãƒ¼ãƒ³r, v, a, m,ï¼ˆrï¼šãƒ¬ã‚¸ã‚¹ã‚¿ vï¼šå³å€¤ aï¼šã‚¢ãƒ‰ãƒ¬ã‚¹ mï¼šãƒ¡ãƒ¢ãƒªï¼‰
 } ST_MNEMONIC;
 
 // ------------------------------
-// ƒŒƒWƒXƒ^
+// ãƒ¬ã‚¸ã‚¹ã‚¿
 // ------------------------------
 typedef struct register_name{
-		char	*reg_name;								//ƒŒƒWƒXƒ^–¼
-		int		reg_type;								//ƒŒƒWƒXƒ^‘®« “ÁêƒŒƒWƒXƒ^:0@”Ä—pƒŒƒWƒXƒ^:1
+		const char	*reg_name;						//ãƒ¬ã‚¸ã‚¹ã‚¿å
+		int		reg_type;							//ãƒ¬ã‚¸ã‚¹ã‚¿å±æ€§ ç‰¹æ®Šãƒ¬ã‚¸ã‚¹ã‚¿:0ã€€æ±ç”¨ãƒ¬ã‚¸ã‚¹ã‚¿:1
 } ST_REGISTER;
 
 // ------------------------------
-// ŠÖ”ƒvƒƒgƒ^ƒCƒv
+// é–¢æ•°ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—
 // ------------------------------
 
 #ifndef __ASSEMBLER_H__
@@ -87,43 +87,31 @@ typedef struct register_name{
 #include "typedef.h"
 #include "define.h"
 
-namespace Simulator {
+using namespace std;
 
-	using namespace std;
+int asmmain(int argc, char *fn);
+char*	get_infilename();
+char*	get_outfilename();
 
-	public class Assembler
-	{
-	public:
-		Assembler();
-		~Assembler();
+int assemble(FILE *fp);
+int analysis(char *mnemonic);
+int output_file(FILE *fp, int start, int end, unsigned short *mem);
+unsigned short* mc_buff_add(void);
 
-		int asmmain(int argc, char *fn);
-		char*	get_infilename();
-		char*	get_outfilename();
+//ãƒ™ãƒ¼ã‚¹ã‚¢ãƒ‰ãƒ¬ã‚¹
+unsigned int g_basis_addr;
 
-	private:
-		int toh_assemble(FILE *fp);
-		int toh_analysis(char *mnemonic);
-		int toh_output_file(FILE *fp, int start, int end, unsigned short *mem);
-		unsigned short* toh_mc_buff_add(void);
+//ãƒã‚·ãƒ³ã‚³ãƒ¼ãƒ‰ãƒãƒƒãƒ•ã‚¡
+unsigned short mc_buff[MACHINE_CODE_LIST_MAX];
+int	pc;
+int start_mc;
 
-		//ƒx[ƒXƒAƒhƒŒƒX
-		unsigned int g_basis_addr;
+//ãƒ©ãƒ™ãƒ«ä¸­é–“ãƒ‡ãƒ¼ã‚¿
+ST_LABEL_ELEMENT label_def_list[LABEL_LIST_MAX];
+ST_LABEL_ELEMENT label_ref_list[LABEL_LIST_MAX];
 
-		//ƒ}ƒVƒ“ƒR[ƒhƒoƒbƒtƒ@
-		unsigned short mc_buff[MACHINE_CODE_LIST_MAX];
-		int	pc;
-		int start_mc;
+char m_infilename[1024];
+char m_outfilename[1024];
 
-		//ƒ‰ƒxƒ‹’†ŠÔƒf[ƒ^
-		ST_LABEL_ELEMENT label_def_list[LABEL_LIST_MAX];
-		ST_LABEL_ELEMENT label_ref_list[LABEL_LIST_MAX];
-
-		char m_infilename[1024];
-		char m_outfilename[1024];
-
-	};
-
-};
 
 #endif  //__ASSEMBLER_H__

@@ -1,8 +1,8 @@
 #include "lib.h"
 
-char aryVars[512][1024];               // SplitŠÖ”‚Å•ªŠ„‚³‚ê‚½•¶š—ñ‚ÌŠi”[”z—ñ
+char aryVars[512][1024];               // Splité–¢æ•°ã§åˆ†å‰²ã•ã‚ŒãŸæ–‡å­—åˆ—ã®æ ¼ç´é…åˆ—
 
-// str‚Å¦‚³‚ê‚é•¶š—ñ‚ğ 10i/16i”‚Æ‚İ‚È‚µ‚Ä”’l‚É•ÏŠ·‚·‚é
+// strã§ç¤ºã•ã‚Œã‚‹æ–‡å­—åˆ—ã‚’ 10é€²/16é€²æ•°ã¨ã¿ãªã—ã¦æ•°å€¤ã«å¤‰æ›ã™ã‚‹
 unsigned long htoi(char *str) {
 	unsigned long val = 0;
 	int idx;
@@ -14,7 +14,7 @@ unsigned long htoi(char *str) {
 
 	for(idx = 0; idx < (int)strlen(str); idx++) {
 		if(str[idx] == '$' || str[idx] == 'x') {
-			n = 16;	// $`A–”‚Í 0x`•\‹L‚Ìê‡‚Í16i”‚Æ‚·‚é
+			n = 16;	// $ï½ã€åˆã¯ 0xï½è¡¨è¨˜ã®å ´åˆã¯16é€²æ•°ã¨ã™ã‚‹
 		}
 
 		val *= n;
@@ -28,43 +28,9 @@ unsigned long htoi(char *str) {
 	return val;
 }
 
-// System::String^ ¨ char* Œ^•ÏŠ·
-// ’ˆÓF–{ŠÖ”“à•”‚Å *dst ‚Ì—ÌˆæŠm•Û‚ğs‚¤‚½‚ßAg—pŒã‚Ídst—Ìˆæ‚ğ•K‚¸ free() ‚·‚é‚±‚ÆB
-// ˆø”F
-// src[in]  •ÏŠ·‚µ‚½‚¢StringƒNƒ‰ƒX‚Ìƒ|ƒCƒ“ƒ^
-// dst[out] ¦ƒ|ƒCƒ“ƒ^‚¾‚¯“n‚·B
-// ƒƒ‚ƒŠŠm•Û‚µ‚½ƒ|ƒCƒ“ƒ^‚ğ“n‚µ‚¿‚á‚¤‚Æ‘‚«Š·‚¦‚¿‚á‚¤‚Ì‚Å’ˆÓ
-int String2Charp(System::String^ src, char **dst)
-{
-	unsigned int convertedChars = 0;
-	int err = 0;
-	int len;
-
-	setlocale( LC_ALL, "Japanese" );	// ‘SŠp•¶š•ÏŠ·‘Î‰
-
-	// System::String(src)¨ƒƒCƒh•¶š—ñ(wch)
-	pin_ptr<const wchar_t> wch = PtrToStringChars(src);		// PtrToStringChars with vcclr.h
-
-	// ƒƒCƒh•¶š—ñ(wch)¨ƒ}ƒ‹ƒ`ƒoƒCƒg•¶š—ñ(*dst)
-	len = (src->Length + 1) * 2;
-	*dst = (char *)malloc( len );
-
-	err = wcstombs_s(&convertedChars, 
-					*dst, len,
-					wch, len);
-
-	return err;
-}
-
-// char* ¨ System::String^ Œ^•ÏŠ·
-System::String^ Charp2String(char *src)
-{
-	return System::Runtime::InteropServices::Marshal::PtrToStringAnsi((System::IntPtr)src);
-}
-
-// p_Splitstr‚ğp_Delimiter•¶š—ñ‚Å‹æØ‚Á‚½•¶š—ñ‚ğp_ary[] ‚ÉŠi”[‚µAtoken”‚ğ•Ô‚·
-// p_ary[]‚Í•¶š—ñ‚Ì”z—ñ‚Å‚ ‚èA\•ª‚È—e—Ê‚ğŠm•Û‚·‚é‚±‚Æ
-int Split(char *p_Splitstr, char *p_Delimiter)
+// p_Splitstrã‚’p_Delimiteræ–‡å­—åˆ—ã§åŒºåˆ‡ã£ãŸæ–‡å­—åˆ—ã‚’p_ary[] ã«æ ¼ç´ã—ã€tokenæ•°ã‚’è¿”ã™
+// p_ary[]ã¯æ–‡å­—åˆ—ã®é…åˆ—ã§ã‚ã‚Šã€ååˆ†ãªå®¹é‡ã‚’ç¢ºä¿ã™ã‚‹ã“ã¨
+int Split(char *p_Splitstr, const char *p_Delimiter)
 {
     char    *ptr, *prevptr;
     int     cnt = 0;
@@ -91,7 +57,7 @@ int Split(char *p_Splitstr, char *p_Delimiter)
 			cnt++;
 		}
 
-        /* Ÿ‚Ìƒg[ƒNƒ“‚ğæ“¾‚µ‚Ü‚·B */
+        /* æ¬¡ã®ãƒˆãƒ¼ã‚¯ãƒ³ã‚’å–å¾—ã—ã¾ã™ã€‚ */
         ptr += strlen(p_Delimiter);
         prevptr = ptr;
     }
@@ -103,8 +69,8 @@ int Split(char *p_Splitstr, char *p_Delimiter)
     return cnt;
 }
 
-// p_Src‚ÉŠÜ‚Ü‚ê‚ép_a‚ğp_b‚É’uŠ·‚µ‚ÄAio_Dst‚ÉŠi”[
-// io_Dst‚Í\•ª‚È—Ìˆæ‚ğŠm•Û‚Ì‚±‚Æ
+// p_Srcã«å«ã¾ã‚Œã‚‹p_aã‚’p_bã«ç½®æ›ã—ã¦ã€io_Dstã«æ ¼ç´
+// io_Dstã¯ååˆ†ãªé ˜åŸŸã‚’ç¢ºä¿ã®ã“ã¨
 int Replace(char *p_Src, char *p_a, char *p_b, char *io_Dst)
 {
     int     aryCnt, i;
@@ -183,7 +149,7 @@ int Trim(char *p_Src, char *io_Dst)
 }
 
 
-// VC++‚É‘¶İ‚µ‚Ägcc‚É‘¶İ‚µ‚È‚¢ŠÖ”‚Ì’è‹`
+// VC++ã«å­˜åœ¨ã—ã¦gccã«å­˜åœ¨ã—ãªã„é–¢æ•°ã®å®šç¾©
 void gstrrev(char *buf)
 {
     int st, ed;
@@ -201,7 +167,7 @@ void gstrrev(char *buf)
     }
 }
 
-// 16i”¨10i”•ÏŠ·
+// 16é€²æ•°â†’10é€²æ•°å¤‰æ›
 unsigned long Hex(char *hexval)
 {
     int idx = 0, a = 10;
@@ -209,7 +175,7 @@ unsigned long Hex(char *hexval)
 	long	sign = 1;
 
 
-    // 1•¶š–Ú‚ª”’l‚©"$"‚Å‚È‚¯‚ê‚Î•’Ê‚Ì•¶š—ñ‚È‚Ì‚ÅƒGƒ‰[
+    // 1æ–‡å­—ç›®ãŒæ•°å€¤ã‹"$"ã§ãªã‘ã‚Œã°æ™®é€šã®æ–‡å­—åˆ—ãªã®ã§ã‚¨ãƒ©ãƒ¼
     if (!( (hexval[0] >= '0' && hexval[0] <= '9') || (hexval[0] == '$') || (hexval[0] == ' ') || (hexval[0] == 9) || (hexval[0] == '-'))) {
         return -1;
     }
@@ -242,26 +208,26 @@ unsigned long Hex(char *hexval)
 
 }
 
-// ”’l”»’è
-// 1=True(val‚Í”’l) 0=False(val‚Í•¶š—ñ)
+// æ•°å€¤åˆ¤å®š
+// 1=True(valã¯æ•°å€¤) 0=False(valã¯æ–‡å­—åˆ—)
 int isNumeric(char *val)
 {
     char buf[256];
 	int	i;
-	int ret;		//”»’èŒ‹‰Ê
+	int ret;		//åˆ¤å®šçµæœ
 
-	//‰Šú‰»
+	//åˆæœŸåŒ–
 	ret = 1;
 	i = 0;
 
-	//•¶š—ñ®Œ`
+	//æ–‡å­—åˆ—æ•´å½¢
     Trim(val, buf);
 
-	//1•¶š–Ú‚ª@'$' or '0-9' or '-' or '+'@‚Å–³‚¯‚ê‚Î”’l‚Å‚Í–³‚¢
-	//2•¶š–ÚˆÈ~‚ª@'0-9' or 'A-F' ‚Å–³‚¯‚ê‚Î”’l‚Å‚Í–³‚¢
+	//1æ–‡å­—ç›®ãŒã€€'$' or '0-9' or '-' or '+'ã€€ã§ç„¡ã‘ã‚Œã°æ•°å€¤ã§ã¯ç„¡ã„
+	//2æ–‡å­—ç›®ä»¥é™ãŒã€€'0-9' or 'A-F' ã§ç„¡ã‘ã‚Œã°æ•°å€¤ã§ã¯ç„¡ã„
 	if(strlen(buf) >= 1){
 		if(buf[0] == '$' && buf[1] != '\0'){
-		//16i@ƒ`ƒFƒbƒN
+		//16é€²ã€€ãƒã‚§ãƒƒã‚¯
 			for(i = 1; buf[i] != '\0'; i++){
 				if( !(buf[i] >= '0' && buf[i] <= '9') && !(buf[i] >= 'A' && buf[i] <= 'F') && !(buf[i] >= 'a' && buf[i] <= 'f') ){
 					ret = 0;
@@ -269,7 +235,7 @@ int isNumeric(char *val)
 				}
 			}
 		} else if((buf[0] >= '0' && buf[0] <= '9') || (buf[0] == '+') || (buf[0] == '-')){
-		//10i@ƒ`ƒFƒbƒN
+		//10é€²ã€€ãƒã‚§ãƒƒã‚¯
 			if(((buf[0] == '+') || (buf[0] == '-')) && buf[1] == '\0'){
 				ret = 0;
 			}
@@ -280,7 +246,7 @@ int isNumeric(char *val)
 				}
 			}
 		} else {
-			//16iE10i‚Å‚à‚È‚¢
+			//16é€²ãƒ»10é€²ã§ã‚‚ãªã„
 			ret = 0;
 		}
 	}
@@ -288,7 +254,7 @@ int isNumeric(char *val)
 }
 
 
-// •¶š—ñ®Œ`(ƒRƒƒ“ƒgE•s—vƒXƒy[ƒXœ‹)
+// æ–‡å­—åˆ—æ•´å½¢(ã‚³ãƒ¡ãƒ³ãƒˆãƒ»ä¸è¦ã‚¹ãƒšãƒ¼ã‚¹é™¤å»)
 int StrScrape(char *inStr, char *outStr)
 {
     char    *tmp;
@@ -301,39 +267,39 @@ int StrScrape(char *inStr, char *outStr)
     strcpy_s(outStr, 2048, inStr);
 
 	//  2008 02 07 cyberbeing toh start
-    if ((tmp = strstr(outStr,";")) != NULL) {                                 // ƒRƒƒ“ƒgœ‹
+    if ((tmp = strstr(outStr,";")) != NULL) {                                 // ã‚³ãƒ¡ãƒ³ãƒˆé™¤å»
         outStr[ (tmp - outStr) ] = '\0';
     }
     while(1) {
-		if ((tmp = strstr(outStr,"\t")) != NULL) {                                // tab•¶š’u‚«Š·‚¦
+		if ((tmp = strstr(outStr,"\t")) != NULL) {                                // tabæ–‡å­—ç½®ãæ›ãˆ
 			outStr[ (tmp - outStr) ] = ' ';
 		}
 		if(tmp == NULL) break;
 	}
-    if ((tmp = strstr(outStr,tab)) != NULL) {                                 // tab•¶š’u‚«Š·‚¦
+    if ((tmp = strstr(outStr,tab)) != NULL) {                                 // tabæ–‡å­—ç½®ãæ›ãˆ
         outStr[ (tmp - outStr) ] = ' ';
     }
     while(1) {
-		if ((tmp = strstr(outStr,",")) != NULL) {                                 // ƒJƒ“ƒ}•¶š’u‚«Š·‚¦
+		if ((tmp = strstr(outStr,",")) != NULL) {                                 // ã‚«ãƒ³ãƒæ–‡å­—ç½®ãæ›ãˆ
 			outStr[ (tmp - outStr) ] = ' ';
 		}
 		if(tmp == NULL) break;
 	}
-    if ((tmp = strstr(outStr,"\r")) != NULL) {                                 // ‰üsƒR[ƒh•ÏŠ·
+    if ((tmp = strstr(outStr,"\r")) != NULL) {                                 // æ”¹è¡Œã‚³ãƒ¼ãƒ‰å¤‰æ›
         outStr[ (tmp - outStr) ] = '\0';
     }
-    if ((tmp = strstr(outStr,"\n")) != NULL) {                                 // ‰üsƒR[ƒh•ÏŠ·
+    if ((tmp = strstr(outStr,"\n")) != NULL) {                                 // æ”¹è¡Œã‚³ãƒ¼ãƒ‰å¤‰æ›
         outStr[ (tmp - outStr) ] = '\0';
     }
 	//  2008 02 07 cyberbeing toh end
 
-	if ((tmp = strstr(outStr,"#")) != NULL) {                                 // ƒRƒƒ“ƒgœ‹
+	if ((tmp = strstr(outStr,"#")) != NULL) {                                 // ã‚³ãƒ¡ãƒ³ãƒˆé™¤å»
         outStr[ (tmp - outStr) ] = '\0';
     }
-    if ((tmp = strstr(outStr,"//")) != NULL) {                                // ƒRƒƒ“ƒgœ‹
+    if ((tmp = strstr(outStr,"//")) != NULL) {                                // ã‚³ãƒ¡ãƒ³ãƒˆé™¤å»
         outStr[ (tmp - outStr) ] = '\0';
     }
-    for(i=0; i<(int)strlen(outStr); i++) {                                    // •s—v‚È§ŒäƒR[ƒh‚ğœ‹
+    for(i=0; i<(int)strlen(outStr); i++) {                                    // ä¸è¦ãªåˆ¶å¾¡ã‚³ãƒ¼ãƒ‰ã‚’é™¤å»
         if (outStr[i] < 0x1c && outStr[i] != 0x9) {
             outStr[i] = 0;
             break;

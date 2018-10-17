@@ -1,11 +1,12 @@
 #include "assembler.h"
 #include "lib.h"
-
-using namespace Simulator;
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 extern char aryVars[512][1024];
 
-//ƒŒƒWƒXƒ^
+//ãƒ¬ã‚¸ã‚¹ã‚¿
 ST_REGISTER register_list[] = {
 								{"PC",	REG_TYPE_SPECIAL},
 								{"SP",	REG_TYPE_SPECIAL},
@@ -30,9 +31,9 @@ ST_REGISTER register_list[] = {
 								{"R15",	REG_TYPE_GENERAL},
 								{""},
 							};
-//ƒj[ƒ‚ƒjƒbƒNƒŠƒXƒg
+//ãƒ‹ãƒ¼ãƒ¢ãƒ‹ãƒƒã‚¯ãƒªã‚¹ãƒˆ
 ST_MNEMONIC mnemonic_list[] = {
-							//   ƒIƒyƒR[ƒh–¼,	Œê’·,	ƒIƒyƒ‰ƒ“ƒh
+							//   ã‚ªãƒšã‚³ãƒ¼ãƒ‰å,	èªé•·,	ã‚ªãƒšãƒ©ãƒ³ãƒ‰
 								{"NOP",         1,         ""},
 								{"HALT",        1,         ""},
 								{"ADD",         3,         "rv"},
@@ -97,7 +98,7 @@ ST_MNEMONIC mnemonic_list[] = {
 								{"RETI",        1,         ""},
 								{"", 0, ""},
 							};
-//‹[—–½—ß
+//æ“¬ä¼¼å‘½ä»¤
 ST_MNEMONIC ass_op_list [] = {
 								{".ORG",        1,         "v"},
 								{".DS",         1,         "v"},
@@ -105,8 +106,22 @@ ST_MNEMONIC ass_op_list [] = {
 								{"",			0,         ""},
 							};
 
-Assembler::Assembler()
-{
+/*============================================================================*
+ *  é–¢æ•°å
+ *      mainé–¢æ•°
+ *  æ¦‚è¦
+ *      ã‚¢ã‚»ãƒ³ãƒ–ãƒ«ã‚’è‡ªå‹•ã§è¡Œã†ãƒ—ãƒ­ã‚°ãƒ©ãƒ 
+ *  ãƒ‘ãƒ©ãƒ¡ã‚¿èª¬æ˜
+ *      
+ *  æˆ»ã‚Šå€¤
+ *      0ï¼šæ­£å¸¸ã€€è² æ•°ï¼šç•°å¸¸
+ *============================================================================*/
+int main(int argc, char **argv){
+	//å¤‰æ•°å®£è¨€
+	FILE	*fp;
+	char	filename[1024];
+
+	//åˆæœŸåŒ–
 	memset(m_infilename, 0x0, sizeof(char) * 1024);
 	memset(m_outfilename, 0x0, sizeof(char) * 1024);
 
@@ -118,88 +133,69 @@ Assembler::Assembler()
 	memset(label_def_list, 0x0, sizeof(ST_LABEL_ELEMENT) * LABEL_LIST_MAX);
 
 	log_init();
-}
 
-Assembler::~Assembler()
-{
-	log_close();
-}
-
-/*============================================================================*
- *  ŠÖ”–¼
- *      mainŠÖ”
- *  ŠT—v
- *      ƒAƒZƒ“ƒuƒ‹‚ğ©“®‚Ås‚¤ƒvƒƒOƒ‰ƒ€
- *  ƒpƒ‰ƒƒ^à–¾
- *      
- *  –ß‚è’l
- *      0F³í@•‰”FˆÙí
- *============================================================================*/
-int Assembler::asmmain(int argc, char *fn){
-	//•Ï”éŒ¾
-	FILE	*fp;
-	char	filename[1024];
-
-	//‰Šú‰»
 	strcpy_s(filename, 1024, FILE_NAME);
 
-	printf("Virtual CPU Assembler for CPU Board Simulator [TOH] Version 1.00\n");
+	printf("Virtual CPU Assembler for CPU Board Simulator Version 1.00 %s\n", argv[0]);
 	if(argc < 2) {
-		printf("Toh@ƒAƒZƒ“ƒuƒ‰\nƒAƒZƒ“ƒuƒ‹‚·‚éƒtƒ@ƒCƒ‹–¼‚ğ“ü—Í‚µ‚Ä‚­‚¾‚³‚¢B");
-		scanf_s("%s",filename);
+		printf("ã‚¢ã‚»ãƒ³ãƒ–ãƒ«ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã‚’å…¥åŠ›ã—ã¦ãã ã•ã„ã€‚ \n");
+		scanf("%s", filename);
 	} else {
-		strcpy_s(filename, 1024, fn);
+		printf("ãƒ•ã‚¡ã‚¤ãƒ«å: %s\n", argv[1]);
+		strcpy_s(filename, 1024, argv[1]);
 		strcpy_s(m_infilename, 1024, filename);
 	}
 
-	//ƒtƒ@ƒCƒ‹ƒI[ƒvƒ“
-	if((fopen_s(&fp, filename,"r")) != 0 ){
-		printf("ƒtƒ@ƒCƒ‹ƒI[ƒvƒ“‚É¸”s‚µ‚Ü‚µ‚½B");
+	//ãƒ•ã‚¡ã‚¤ãƒ«ã‚ªãƒ¼ãƒ—ãƒ³
+	if((fp = fopen(filename,"r")) != 0 ){
+		printf("ãƒ•ã‚¡ã‚¤ãƒ«ã‚ªãƒ¼ãƒ—ãƒ³ã«å¤±æ•—ã—ã¾ã—ãŸã€‚");
 		return -1;
 	}
 	log(LOG_INFO,"file open OK\n");
 	
-	//ƒAƒZƒ“ƒuƒ‹ˆ—
-	toh_assemble(fp);
+	//ã‚¢ã‚»ãƒ³ãƒ–ãƒ«å‡¦ç†
+	assemble(fp);
 	fclose(fp);
-	//ƒtƒ@ƒCƒ‹o—Í(`.asm ¨ `.dat)
+	//ãƒ•ã‚¡ã‚¤ãƒ«å‡ºåŠ›(ï½.asm â†’ ï½.dat)
 	Split(filename, ".");
 	strcpy_s(filename, 1024, aryVars[0]);
 	strcat_s(filename, 1024, ".dat");
 
 	strcpy_s(m_outfilename, 1024, filename);
 
-	//ƒtƒ@ƒCƒ‹ƒI[ƒvƒ“
-	if((fopen_s(&fp, filename,"w")) != 0 ){
-		printf("ƒtƒ@ƒCƒ‹ƒI[ƒvƒ“‚É¸”s‚µ‚Ü‚µ‚½B");
-		exit(1);
+	//ãƒ•ã‚¡ã‚¤ãƒ«ã‚ªãƒ¼ãƒ—ãƒ³
+	if((fp = fopen(filename,"w")) != 0 ){
+		printf("ãƒ•ã‚¡ã‚¤ãƒ«ã‚ªãƒ¼ãƒ—ãƒ³ã«å¤±æ•—ã—ã¾ã—ãŸã€‚");
+		return -2;
 	}
 
-	toh_output_file(fp, start_mc, pc, mc_buff);
+	output_file(fp, start_mc, pc, mc_buff);
 	fclose(fp);
 
+	log_close();
+	
 	return 0;
 }
 
 /*============================================================================*
- *  ŠÖ”–¼
- *      ƒAƒZƒ“ƒuƒ‹ˆ—
- *  ŠT—v
- *      ƒAƒZƒ“ƒuƒ‰ƒR[ƒh‚ğƒAƒZƒ“ƒuƒ‹‚·‚é
- *  ƒpƒ‰ƒƒ^à–¾
- *      FILE		*fp			ƒ\[ƒXƒR[ƒh
- *  –ß‚è’l
- *      ‚È‚µ
+ *  é–¢æ•°å
+ *      ã‚¢ã‚»ãƒ³ãƒ–ãƒ«å‡¦ç†
+ *  æ¦‚è¦
+ *      ã‚¢ã‚»ãƒ³ãƒ–ãƒ©ã‚³ãƒ¼ãƒ‰ã‚’ã‚¢ã‚»ãƒ³ãƒ–ãƒ«ã™ã‚‹
+ *  ãƒ‘ãƒ©ãƒ¡ã‚¿èª¬æ˜
+ *      FILE		*fp			ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰
+ *  æˆ»ã‚Šå€¤
+ *      ãªã—
  *============================================================================*/
-int Assembler::toh_assemble(FILE *fp){
+int assemble(FILE *fp){
 	char	op_pattern[STRING_LEN];
-	char	buff[STRING_LEN];			//ƒtƒ@ƒCƒ‹“Ç‚İ‚İ—pƒoƒbƒtƒ@
+	char	buff[STRING_LEN];			//ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿ç”¨ãƒãƒƒãƒ•ã‚¡
 	char	work_str[STRING_LEN];		//
-	int		split_cnt;					//•ªŠ„”
-	int		mnemonic_ind;				//•ªŠ„—v‘fƒAƒNƒZƒX—p
-	int		mc_op_ind;					//ƒ}ƒVƒ“ƒR[ƒhƒoƒbƒtƒ@ƒAƒNƒZƒX—p
-	int		output_mc_flg = 0;			//o—ÍƒXƒ^[ƒg’lİ’è”»•Ê—p
-	int		fake_op_flg;				//‹[—–½—ß”»•Ê—p
+	int		split_cnt;					//åˆ†å‰²æ•°
+	int		mnemonic_ind;				//åˆ†å‰²è¦ç´ ã‚¢ã‚¯ã‚»ã‚¹ç”¨
+	int		mc_op_ind;					//ãƒã‚·ãƒ³ã‚³ãƒ¼ãƒ‰ãƒãƒƒãƒ•ã‚¡ã‚¢ã‚¯ã‚»ã‚¹ç”¨
+	int		output_mc_flg = 0;			//å‡ºåŠ›ã‚¹ã‚¿ãƒ¼ãƒˆå€¤è¨­å®šåˆ¤åˆ¥ç”¨
+	int		fake_op_flg;				//æ“¬ä¼¼å‘½ä»¤åˆ¤åˆ¥ç”¨
 	int		lbl_def_flg;
 	int		i,s;
 	int		reg_flg = 0;
@@ -207,43 +203,43 @@ int Assembler::toh_assemble(FILE *fp){
 	int		opcode_idx;
 	int		last_pc, tmppc, code_chk;
 	char*	cur_mnemonic;
-	int		macro_recursive_block;		// ƒ}ƒNƒzŠÂQÆ–h~ƒ`ƒFƒbƒNƒJƒEƒ“ƒ^
+	int		macro_recursive_block;		// ãƒã‚¯ãƒ­å¾ªç’°å‚ç…§é˜²æ­¢ãƒã‚§ãƒƒã‚¯ã‚«ã‚¦ãƒ³ã‚¿
 	char*	nexttok = NULL;
 
 	log(LOG_INFO,"Assemble First analysis start\n");
 	//
-	// ‚PŸ‰ğÍŠÖ”
+	// ï¼‘æ¬¡è§£æé–¢æ•°
 	//
 	while(!feof(fp)){
-		//‰Šú‰»
+		//åˆæœŸåŒ–
 		fake_op_flg = 0;
 		lbl_def_flg = 0;
-		//”z—ñ
+		//é…åˆ—
 		memset(buff, 0, sizeof(char)*STRING_LEN);
 		memset(work_str, 0, sizeof(char)*STRING_LEN);
 
-		//1s‚Ì•¶š—ñ‚ğæ“¾E‘å•¶š‚É•ÏŠ·
+		//1è¡Œã®æ–‡å­—åˆ—ã‚’å–å¾—ãƒ»å¤§æ–‡å­—ã«å¤‰æ›
 		fgets(buff, STRING_LEN-1, fp);
 		log(LOG_INFO,"GET line: %s\n",buff);
 
 		for(i = 0; i < STRING_LEN && buff[i] != '\0'; i++){
 			buff[i] = toupper(buff[i]);
 		}
-		//ƒRƒƒ“ƒgEtab•¶š‚ğ•ÏŠ·
+		//ã‚³ãƒ¡ãƒ³ãƒˆãƒ»tabæ–‡å­—ã‚’å¤‰æ›
 		StrScrape(buff, work_str);
 
-		//•¶š—ñ•ªŠ„
+		//æ–‡å­—åˆ—åˆ†å‰²
 		split_cnt = Split(work_str, " ");
-		//•ªŠ„‚ª0ŒÂ‚Ìê‡
+		//åˆ†å‰²ãŒ0å€‹ã®å ´åˆ
 		//if(split_cnt == 0){ split_cnt++; }
 
-		//ƒ‰ƒxƒ‹’è‹`‰ğÍ
+		//ãƒ©ãƒ™ãƒ«å®šç¾©è§£æ
 		for(mnemonic_ind = 0; mnemonic_ind < split_cnt; mnemonic_ind++){
 			cur_mnemonic = aryVars[mnemonic_ind];
-			switch(toh_analysis(cur_mnemonic)){
-				case TYPE_LABEL_DEF:		//ƒ‰ƒxƒ‹‚Ì’è‹`
+			switch(analysis(cur_mnemonic)){
+				case TYPE_LABEL_DEF:		//ãƒ©ãƒ™ãƒ«ã®å®šç¾©
 					for(i = 0; i < LABEL_LIST_MAX; i++){
-						//’†ŠÔƒf[ƒ^‚Öo—Íi’è‹`j
+						//ä¸­é–“ãƒ‡ãƒ¼ã‚¿ã¸å‡ºåŠ›ï¼ˆå®šç¾©ï¼‰
 						if(strcmp(label_def_list[i].label_name, "") == 0){
 							strcpy_s(label_def_list[i].label_name, 128, strtok_s(aryVars[0], ":", &nexttok));
 							label_def_list[i].addr = g_basis_addr;
@@ -254,31 +250,31 @@ int Assembler::toh_assemble(FILE *fp){
 					}
 					break;
 
-				case TYPE_FAKE_OP:				//‹[—–½—ß
-					//‹[—–½—ß‰ğß
+				case TYPE_FAKE_OP:				//æ“¬ä¼¼å‘½ä»¤
+					//æ“¬ä¼¼å‘½ä»¤è§£é‡ˆ
 					if(strcmp(aryVars[0], ".ORG") == 0){
-					//.ORG [ƒAƒhƒŒƒXi‘¦’lj]
+					//.ORG [ã‚¢ãƒ‰ãƒ¬ã‚¹ï¼ˆå³å€¤ï¼‰]
 						if((split_cnt == 2) && (isNumeric(aryVars[1]) == 1)){
 							g_basis_addr = Hex(aryVars[1]);
 							pc = g_basis_addr;
 							fake_op_flg = 1;
 						} else {
-							log(LOG_ERROR,".ORG–½—ß@ƒIƒyƒ‰ƒ“ƒhƒGƒ‰[ %s\n", work_str);
+							log(LOG_ERROR,".ORGå‘½ä»¤ã€€ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã‚¨ãƒ©ãƒ¼ %s\n", work_str);
 						}
 					}
 					if(strcmp(aryVars[0], ".DS") == 0){
-					//.DS [ƒTƒCƒY] [‰Šú’l]		// [ƒTƒCƒY]‚Å¦‚³‚ê‚½—Ìˆæ‚ğ[‰Šú’l]‚Å–„‚ß‚é
-						//ƒIƒyƒ‰ƒ“ƒh”‚Æ®”ƒ`ƒFƒbƒN
+					//.DS [ã‚µã‚¤ã‚º] [åˆæœŸå€¤]		// [ã‚µã‚¤ã‚º]ã§ç¤ºã•ã‚ŒãŸé ˜åŸŸã‚’[åˆæœŸå€¤]ã§åŸ‹ã‚ã‚‹
+						//ã‚ªãƒšãƒ©ãƒ³ãƒ‰æ•°ã¨æ•´æ•°ãƒã‚§ãƒƒã‚¯
 						if((split_cnt == 3) && (isNumeric(aryVars[1]) == 1) && (isNumeric(aryVars[2]) == 1)) {
 							s = g_basis_addr + Hex(aryVars[1]);
-							//‰Šú‰»—Ìˆæè‡’lƒ`ƒFƒbƒN
+							//åˆæœŸåŒ–é ˜åŸŸé–¾å€¤ãƒã‚§ãƒƒã‚¯
 							if(s >= MACHINE_CODE_LIST_MAX){
-								log(LOG_ERROR,".DS–½—ß@ƒƒ‚ƒŠƒI[ƒo[ ƒƒ‚ƒŠƒTƒCƒY'%d' ", MACHINE_CODE_LIST_MAX);
+								log(LOG_ERROR,".DSå‘½ä»¤ã€€ãƒ¡ãƒ¢ãƒªã‚ªãƒ¼ãƒãƒ¼ ãƒ¡ãƒ¢ãƒªã‚µã‚¤ã‚º'%d' ", MACHINE_CODE_LIST_MAX);
 							}else if(Hex(aryVars[1]) <= 0){
-								log(LOG_ERROR,".DS–½—ß@ƒTƒCƒY’è‹`ƒGƒ‰[", MACHINE_CODE_LIST_MAX);
+								log(LOG_ERROR,".DSå‘½ä»¤ã€€ã‚µã‚¤ã‚ºå®šç¾©ã‚¨ãƒ©ãƒ¼", MACHINE_CODE_LIST_MAX);
 							}
 
-							//—Ìˆæ‰Šú‰»
+							//é ˜åŸŸåˆæœŸåŒ–
 							lcnt = Hex(aryVars[1]);
 							for(i = 0; i < lcnt; i++) {
 								mc_buff[g_basis_addr + i] = (unsigned short)Hex(aryVars[2]);
@@ -291,7 +287,7 @@ int Assembler::toh_assemble(FILE *fp){
 					if(strcmp(aryVars[0], ".DEF") == 0) {
 						if((split_cnt == 3) && (isNumeric(aryVars[1]) == 0)) {
 							for(i = 0; i < LABEL_LIST_MAX; i++){
-								//’†ŠÔƒf[ƒ^‚Öo—Íi’è‹`j
+								//ä¸­é–“ãƒ‡ãƒ¼ã‚¿ã¸å‡ºåŠ›ï¼ˆå®šç¾©ï¼‰
 								if(strcmp(label_def_list[i].label_name, "") == 0){
 									strcpy_s(label_def_list[i].label_name, 128, aryVars[1]);
 									strcpy_s(label_def_list[i].macro, 128, aryVars[2]);
@@ -302,22 +298,22 @@ int Assembler::toh_assemble(FILE *fp){
 					}
 					break;
 
-				case TYPE_OPERATION:		//–½—ß
-				case TYPE_LABEL_REF:		//ƒ‰ƒxƒ‹QÆ
-				case TYPE_REGISTER:			//ƒŒƒWƒXƒ^
-				case TYPE_MEM_R:			//ƒAƒhƒŒƒX(ƒŒƒWƒXƒ^)
-				case TYPE_MEM_V:			//ƒAƒhƒŒƒX(‘¦’l)
-				case TYPE_VAL:				//‘¦’l
+				case TYPE_OPERATION:		//å‘½ä»¤
+				case TYPE_LABEL_REF:		//ãƒ©ãƒ™ãƒ«å‚ç…§
+				case TYPE_REGISTER:			//ãƒ¬ã‚¸ã‚¹ã‚¿
+				case TYPE_MEM_R:			//ã‚¢ãƒ‰ãƒ¬ã‚¹(ãƒ¬ã‚¸ã‚¹ã‚¿)
+				case TYPE_MEM_V:			//ã‚¢ãƒ‰ãƒ¬ã‚¹(å³å€¤)
+				case TYPE_VAL:				//å³å€¤
 					g_basis_addr++;
 					break;
 
-				//ƒAƒZƒ“ƒuƒ‹ƒGƒ‰[
+				//ã‚¢ã‚»ãƒ³ãƒ–ãƒ«ã‚¨ãƒ©ãƒ¼
 				default:
 					log(LOG_ERROR,"Assemble error %s\n",buff);
 					return ASSEMBLE_ERROR;
 			}
-			// ‹[—–½—ß‚Å‚ ‚éê‡‚ÍAŠù‚Éswitch•¶“à‚Å‰ğÍÏ‚İ‚Ìˆ×
-			// ƒ‹[ƒv‚ğ”²‚¯‚é
+			// æ“¬ä¼¼å‘½ä»¤ã§ã‚ã‚‹å ´åˆã¯ã€æ—¢ã«switchæ–‡å†…ã§è§£ææ¸ˆã¿ã®ç‚º
+			// ãƒ«ãƒ¼ãƒ—ã‚’æŠœã‘ã‚‹
 			if(fake_op_flg == 1){
 				break;
 			}
@@ -326,88 +322,88 @@ int Assembler::toh_assemble(FILE *fp){
 	log(LOG_INFO,"Assemble Second analysis start\n");
 	log(LOG_OBJ,"Second analysis start----------\n");
 	//
-	// ‚QŸ‰ğÍŠÖ”
+	// ï¼’æ¬¡è§£æé–¢æ•°
 	//
 	rewind(fp);
 	while(!feof(fp)){
-		//‰Šú‰»
+		//åˆæœŸåŒ–
 		mc_op_ind = 0;
 		fake_op_flg = 0;
 		lbl_def_flg = 0;
-		//”z—ñ
+		//é…åˆ—
 		memset(buff, 0, sizeof(char)*STRING_LEN);
 		memset(work_str, 0, sizeof(char)*STRING_LEN);
 		memset(op_pattern, 0, sizeof(char)*STRING_LEN);
 
-		//1s‚Ì•¶š—ñ‚ğæ“¾E‘å•¶š‚É•ÏŠ·
+		//1è¡Œã®æ–‡å­—åˆ—ã‚’å–å¾—ãƒ»å¤§æ–‡å­—ã«å¤‰æ›
 		fgets(buff, STRING_LEN-1, fp);
-		for(i = 0; i < STRING_LEN && buff[i] != NULL; i++){
+		for(i = 0; i < STRING_LEN && buff[i] != (int)NULL; i++){
 			buff[i] = toupper(buff[i]);
 		}
 
-/*		//ƒ‰ƒxƒ‹’è‹`s‚Ì“Ç‚İ”ò‚Î‚µ
+/*		//ãƒ©ãƒ™ãƒ«å®šç¾©è¡Œã®èª­ã¿é£›ã°ã—
 		if(strstr(buff, ":") != NULL){
 			continue;
 		}
 */
-		//ƒRƒƒ“ƒgEtab•¶š‚ğ•ÏŠ·
+		//ã‚³ãƒ¡ãƒ³ãƒˆãƒ»tabæ–‡å­—ã‚’å¤‰æ›
 		StrScrape(buff, work_str);
 
-		//•¶š—ñ•ªŠ„
+		//æ–‡å­—åˆ—åˆ†å‰²
 		split_cnt = Split(work_str, " ");
 		
-		//ƒ‰ƒxƒ‹’è‹`ˆÈŠO‚Ì‰ğÍ
+		//ãƒ©ãƒ™ãƒ«å®šç¾©ä»¥å¤–ã®è§£æ
 		last_pc = pc;
 		macro_recursive_block = 0;
 		for(mnemonic_ind = 0, opcode_idx = 0; mnemonic_ind < split_cnt; mnemonic_ind++){
 			cur_mnemonic = aryVars[mnemonic_ind];
 
 RE_ANALYSIS:
-			switch(toh_analysis(cur_mnemonic)){
-				case TYPE_LABEL_DEF:		//ƒ‰ƒxƒ‹‚Ì’è‹`
+			switch(analysis(cur_mnemonic)){
+				case TYPE_LABEL_DEF:		//ãƒ©ãƒ™ãƒ«ã®å®šç¾©
 					lbl_def_flg = 1;
 					break;
 
-				case TYPE_OPERATION:		//–½—ß
+				case TYPE_OPERATION:		//å‘½ä»¤
 					opcode_idx = mnemonic_ind;
 					mc_op_ind = pc;
 					pc++;
 					break;
 
-				case TYPE_LABEL_REF:		//ƒ‰ƒxƒ‹QÆ
+				case TYPE_LABEL_REF:		//ãƒ©ãƒ™ãƒ«å‚ç…§
 					for(i = 0; i < LABEL_LIST_MAX; i++){
 						if(strcmp(label_def_list[i].label_name, cur_mnemonic) == 0) {
 							if(strcmp(label_def_list[i].macro, "") == 0) {
-								// ƒ‰ƒxƒ‹’l ’uŠ·
+								// ãƒ©ãƒ™ãƒ«å€¤ ç½®æ›
 								mc_buff[pc] = label_def_list[i].addr;
 								pc++;
 								break;
 							} else {
-								// ƒ}ƒNƒ’l ’uŠ·•Ä‰ğÍ
+								// ãƒã‚¯ãƒ­å€¤ ç½®æ›ï¼†å†è§£æ
 								cur_mnemonic = label_def_list[i].macro;
 								if(macro_recursive_block < MACRO_MAX_RECURSIVE_REFER) {
 									macro_recursive_block++;
 									goto RE_ANALYSIS;
 								} else {
-									log(LOG_ERROR,"ƒ}ƒNƒ Ä‹AQÆƒI[ƒo[ƒGƒ‰[%s\n",buff);
+									log(LOG_ERROR,"ãƒã‚¯ãƒ­ å†å¸°å‚ç…§ã‚ªãƒ¼ãƒãƒ¼ã‚¨ãƒ©ãƒ¼%s\n",buff);
 									return RECURSIVEOVER_ERROR;
 								}
 							}
 						}
 						if(i >= LABEL_LIST_MAX){
-							//ƒ‰ƒxƒ‹’è‹`ƒGƒ‰[
-							log(LOG_ERROR,"ƒ‰ƒxƒ‹@–¢’è‹`ƒGƒ‰[ %s\n",buff);
+							//ãƒ©ãƒ™ãƒ«å®šç¾©ã‚¨ãƒ©ãƒ¼
+							log(LOG_ERROR,"ãƒ©ãƒ™ãƒ«ã€€æœªå®šç¾©ã‚¨ãƒ©ãƒ¼ %s\n",buff);
 							return ASSEMBLE_ERROR;
 						}
 					}
 					strcat_s(op_pattern, 2048, "v");
 					break;
 
-				case TYPE_REGISTER:			//ƒŒƒWƒXƒ^
-					//ƒŒƒWƒXƒ^"R?"
+				case TYPE_REGISTER:			//ãƒ¬ã‚¸ã‚¹ã‚¿
+					//ãƒ¬ã‚¸ã‚¹ã‚¿"R?"
 					for(i = 0; strcmp(register_list[i].reg_name, "") != 0; i++){
 						if(strcmp(register_list[i].reg_name, cur_mnemonic) == 0){
-							//ƒ†[ƒU[ƒŒƒWƒXƒ^‚Å‚ ‚Á‚½ê‡‚Í0`15‚ÌƒŒƒWƒXƒ^”Ô†‚É•ÏŠ·‚·‚é
+							//ãƒ¦ãƒ¼ã‚¶ãƒ¼ãƒ¬ã‚¸ã‚¹ã‚¿ã§ã‚ã£ãŸå ´åˆã¯0ï½15ã®ãƒ¬ã‚¸ã‚¹ã‚¿ç•ªå·ã«å¤‰æ›ã™ã‚‹
 							if(register_list[i].reg_type == REG_TYPE_GENERAL){
 								i -= 5;
 							} else if(register_list[i].reg_type == REG_TYPE_SPECIAL) {
@@ -420,17 +416,17 @@ RE_ANALYSIS:
 						}
 					}
 					if(reg_flg == 0){
-						log(LOG_ERROR,"‘¶İ‚µ‚È‚¢ƒŒƒWƒXƒ^‚ğg—p‚µ‚Ä‚¢‚Ü‚· %s\n",buff);
+						log(LOG_ERROR,"å­˜åœ¨ã—ãªã„ãƒ¬ã‚¸ã‚¹ã‚¿ã‚’ä½¿ç”¨ã—ã¦ã„ã¾ã™ %s\n",buff);
 						return ASSEMBLE_ERROR;
 					}
 					strcat_s(op_pattern, 2048, "r");
 					break;
 
-				case TYPE_MEM_R:			//ƒAƒhƒŒƒX(ƒŒƒWƒXƒ^)
-					//ƒŒƒWƒXƒ^"R?"
+				case TYPE_MEM_R:			//ã‚¢ãƒ‰ãƒ¬ã‚¹(ãƒ¬ã‚¸ã‚¹ã‚¿)
+					//ãƒ¬ã‚¸ã‚¹ã‚¿"R?"
 					for(i = 0; strcmp(register_list[i].reg_name, "") != 0; i++){
 						if(strstr(cur_mnemonic, register_list[i].reg_name) != NULL){
-							//ƒ†[ƒU[ƒŒƒWƒXƒ^‚Å‚ ‚Á‚½ê‡‚Í0`15‚ÌƒŒƒWƒXƒ^”Ô†‚É•ÏŠ·‚·‚é
+							//ãƒ¦ãƒ¼ã‚¶ãƒ¼ãƒ¬ã‚¸ã‚¹ã‚¿ã§ã‚ã£ãŸå ´åˆã¯0ï½15ã®ãƒ¬ã‚¸ã‚¹ã‚¿ç•ªå·ã«å¤‰æ›ã™ã‚‹
 							if(register_list[i].reg_type == REG_TYPE_GENERAL){
 								i -= 5;
 							}
@@ -442,22 +438,22 @@ RE_ANALYSIS:
 					strcat_s(op_pattern, 2048, "mr");
 					break;
 
-				case TYPE_MEM_V:			//ƒAƒhƒŒƒX(‘¦’l)
-					//‘¦’l
+				case TYPE_MEM_V:			//ã‚¢ãƒ‰ãƒ¬ã‚¹(å³å€¤)
+					//å³å€¤
 					if(isNumeric(cur_mnemonic) == 0){
-						log(LOG_ERROR,"ƒAƒhƒŒƒX’l‚ª”’l‚Å‚Í‚ ‚è‚Ü‚¹‚ñ %s\n",buff);
+						log(LOG_ERROR,"ã‚¢ãƒ‰ãƒ¬ã‚¹å€¤ãŒæ•°å€¤ã§ã¯ã‚ã‚Šã¾ã›ã‚“ %s\n",buff);
 					}
-					//10i@‚Æ@16i‚É‚æ‚èˆ—‚ğ•ª‚¯‚éB
+					//10é€²ã€€ã¨ã€€16é€²ã«ã‚ˆã‚Šå‡¦ç†ã‚’åˆ†ã‘ã‚‹ã€‚
 					mc_buff[pc] = (unsigned short)Hex(cur_mnemonic);
 					
 					pc++;
 					strcat_s(op_pattern, 2048, "mv");
 					break;
 
-				case TYPE_VAL:				//‘¦’l
-					//‘¦’l
+				case TYPE_VAL:				//å³å€¤
+					//å³å€¤
 					if(isNumeric(cur_mnemonic) == 0){
-						log(LOG_ERROR,"ƒAƒhƒŒƒX’l‚ª”’l‚Å‚Í‚ ‚è‚Ü‚¹‚ñ %s\n",buff);
+						log(LOG_ERROR,"ã‚¢ãƒ‰ãƒ¬ã‚¹å€¤ãŒæ•°å€¤ã§ã¯ã‚ã‚Šã¾ã›ã‚“ %s\n",buff);
 					}
 					mc_buff[pc] = (unsigned short)Hex(cur_mnemonic);
 					pc++;
@@ -465,21 +461,21 @@ RE_ANALYSIS:
 					break;
 				case TYPE_FAKE_OP:
 					if(strcmp(aryVars[0], ".ORG") == 0){
-					//.ORG [ƒAƒhƒŒƒXi‘¦’lj]
+					//.ORG [ã‚¢ãƒ‰ãƒ¬ã‚¹ï¼ˆå³å€¤ï¼‰]
 						if((split_cnt == 2) && (isNumeric(aryVars[1]) == 1)){
 							g_basis_addr = Hex(aryVars[1]);
 							pc = g_basis_addr;
 							fake_op_flg = 1;
 						} else {
-							log(LOG_ERROR,".ORG–½—ß@ƒIƒyƒ‰ƒ“ƒhƒGƒ‰[ %s\n", work_str);
+							log(LOG_ERROR,".ORGå‘½ä»¤ã€€ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã‚¨ãƒ©ãƒ¼ %s\n", work_str);
 						}
 					}
 					if(strcmp(aryVars[0], ".DS") == 0){
 						unsigned long inittmp = 0x0;
-						//.DS [ƒTƒCƒY] [‰Šú’l]
-						//ƒIƒyƒ‰ƒ“ƒh”‚Æ®”ƒ`ƒFƒbƒN
+						//.DS [ã‚µã‚¤ã‚º] [åˆæœŸå€¤]
+						//ã‚ªãƒšãƒ©ãƒ³ãƒ‰æ•°ã¨æ•´æ•°ãƒã‚§ãƒƒã‚¯
 						if(split_cnt == 3 && isNumeric(aryVars[1]) == 1) {
-							if(toh_analysis(aryVars[2]) == TYPE_LABEL_REF) {
+							if(analysis(aryVars[2]) == TYPE_LABEL_REF) {
 								for(i = 0; i < LABEL_LIST_MAX; i++){
 									if(strcmp(label_def_list[i].label_name, aryVars[2]) == 0){
 										s = pc + Hex(aryVars[1]);
@@ -487,8 +483,8 @@ RE_ANALYSIS:
 										break;
 									}
 									if(i >= LABEL_LIST_MAX) {
-										//ƒ‰ƒxƒ‹’è‹`ƒGƒ‰[
-										log(LOG_ERROR,"ƒ‰ƒxƒ‹@–¢’è‹`ƒGƒ‰[ %s\n",buff);
+										//ãƒ©ãƒ™ãƒ«å®šç¾©ã‚¨ãƒ©ãƒ¼
+										log(LOG_ERROR,"ãƒ©ãƒ™ãƒ«ã€€æœªå®šç¾©ã‚¨ãƒ©ãƒ¼ %s\n",buff);
 										return ASSEMBLE_ERROR;
 									}
 								}
@@ -496,24 +492,24 @@ RE_ANALYSIS:
 								s = pc + Hex(aryVars[1]);
 								inittmp = Hex(aryVars[2]);
 							} else {
-								log(LOG_ERROR,".DS •¶–@ƒGƒ‰[ %s\n",buff);
+								log(LOG_ERROR,".DS æ–‡æ³•ã‚¨ãƒ©ãƒ¼ %s\n",buff);
 								return ASSEMBLE_ERROR;
 							}
 
-							//‰Šú‰»—Ìˆæè‡’lƒ`ƒFƒbƒN
+							//åˆæœŸåŒ–é ˜åŸŸé–¾å€¤ãƒã‚§ãƒƒã‚¯
 							if(s >= MACHINE_CODE_LIST_MAX){
-								log(LOG_ERROR,".DS–½—ß@ƒƒ‚ƒŠƒI[ƒo[ ƒƒ‚ƒŠƒTƒCƒY'%d'\n", MACHINE_CODE_LIST_MAX);
+								log(LOG_ERROR,".DSå‘½ä»¤ã€€ãƒ¡ãƒ¢ãƒªã‚ªãƒ¼ãƒãƒ¼ ãƒ¡ãƒ¢ãƒªã‚µã‚¤ã‚º'%d'\n", MACHINE_CODE_LIST_MAX);
 							}else if(Hex(aryVars[1]) <= 0){
-								log(LOG_ERROR,".DS–½—ß@ƒTƒCƒY’è‹`ƒGƒ‰[\n", MACHINE_CODE_LIST_MAX);
+								log(LOG_ERROR,".DSå‘½ä»¤ã€€ã‚µã‚¤ã‚ºå®šç¾©ã‚¨ãƒ©ãƒ¼\n", MACHINE_CODE_LIST_MAX);
 							}
 
-							//—Ìˆæ‰Šú‰»
+							//é ˜åŸŸåˆæœŸåŒ–
 							lcnt = Hex(aryVars[1]);
 							for(i = 0; i < lcnt; i++) {
 								mc_buff[pc + i] = (unsigned short)inittmp;
 							}
 
-							//ƒvƒƒOƒ‰ƒ€ƒJƒEƒ“ƒ^XV
+							//ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‚«ã‚¦ãƒ³ã‚¿æ›´æ–°
 							pc = s;
 							fake_op_flg = 1;
 						}
@@ -523,26 +519,26 @@ RE_ANALYSIS:
 					}
 					break;
 
-				//ƒAƒZƒ“ƒuƒ‹ƒGƒ‰[
+				//ã‚¢ã‚»ãƒ³ãƒ–ãƒ«ã‚¨ãƒ©ãƒ¼
 				default:
-					log(LOG_ERROR,"ƒj[ƒ‚ƒjƒbƒN‚ª‚Ç‚Ìí•Ê‚É‚à‘®‚µ‚Ü‚¹‚ñ %s\n",buff);
+					log(LOG_ERROR,"ãƒ‹ãƒ¼ãƒ¢ãƒ‹ãƒƒã‚¯ãŒã©ã®ç¨®åˆ¥ã«ã‚‚å±ã—ã¾ã›ã‚“ %s\n",buff);
 					return ASSEMBLE_ERROR;
 			}
-			// ‹[—–½—ß‚Å‚ ‚éê‡‚ÍAŠù‚Éswitch•¶“à‚Å‰ğÍÏ‚İ‚Ìˆ×
-			// ƒ‹[ƒv‚ğ”²‚¯‚é
+			// æ“¬ä¼¼å‘½ä»¤ã§ã‚ã‚‹å ´åˆã¯ã€æ—¢ã«switchæ–‡å†…ã§è§£ææ¸ˆã¿ã®ç‚º
+			// ãƒ«ãƒ¼ãƒ—ã‚’æŠœã‘ã‚‹
 			if(fake_op_flg == 1){
 				break;
 			}
 		}
 
-		//–½—ßƒ}ƒVƒ“ƒR[ƒh‰ğÍ
+		//å‘½ä»¤ãƒã‚·ãƒ³ã‚³ãƒ¼ãƒ‰è§£æ
 		if(split_cnt && fake_op_flg == 0) {
 			code_chk = 0;
 			for(i = 0; strcmp(mnemonic_list[i].op_code_name, "") != 0; i++){
 				if(strcmp(mnemonic_list[i].op_code_name, aryVars[opcode_idx]) == 0){
 					if(strcmp(mnemonic_list[i].param, op_pattern) == 0){
 						mc_buff[mc_op_ind] = i;
-						//ƒfƒoƒbƒO—pƒƒOo—Í
+						//ãƒ‡ãƒãƒƒã‚°ç”¨ãƒ­ã‚°å‡ºåŠ›
 						log(LOG_OBJ,"$%08x %s [",mc_op_ind, work_str);
 						for(tmppc = last_pc; tmppc < pc; tmppc++) {
 							log(LOG_OBJ, "$%04x ", mc_buff[tmppc]);
@@ -560,7 +556,7 @@ RE_ANALYSIS:
 				}
 			}
 			if(fake_op_flg == 0 && lbl_def_flg == 0 && code_chk == 0) {
-				log(LOG_ERROR,".ORG–½—ß@ƒj[ƒ‚ƒjƒbƒNƒGƒ‰[ %s\n", work_str);
+				log(LOG_ERROR,".ORGå‘½ä»¤ã€€ãƒ‹ãƒ¼ãƒ¢ãƒ‹ãƒƒã‚¯ã‚¨ãƒ©ãƒ¼ %s\n", work_str);
 				log(LOG_OBJ,"$%08x %s MNEMONIC ERROR.\n",mc_op_ind, work_str);
 				return ASSEMBLE_ERROR;
 			}
@@ -569,56 +565,56 @@ RE_ANALYSIS:
 	return 0;
 }
 /*============================================================================*
- *  ŠÖ”–¼
- *      ƒ\[ƒXƒR[ƒh‰ğÍ
- *  ŠT—v
- *      •¶š—ñ‚©‚ç–½—ßí•ÊŒ‹‰Ê‚ğ•Ô‚·
- *  ƒpƒ‰ƒƒ^à–¾
+ *  é–¢æ•°å
+ *      ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰è§£æ
+ *  æ¦‚è¦
+ *      æ–‡å­—åˆ—ã‹ã‚‰å‘½ä»¤ç¨®åˆ¥çµæœã‚’è¿”ã™
+ *  ãƒ‘ãƒ©ãƒ¡ã‚¿èª¬æ˜
  *      
- *  –ß‚è’l
- *@@@@0: ƒGƒ‰[  0ˆÈŠO‚Ì®”:@í•Ê
+ *  æˆ»ã‚Šå€¤
+ *ã€€ã€€ã€€ã€€0: ã‚¨ãƒ©ãƒ¼  0ä»¥å¤–ã®æ•´æ•°:ã€€ç¨®åˆ¥
  *============================================================================*/
-int Assembler::toh_analysis(char *mnemonic){
+int analysis(char *mnemonic){
 	char *ptr = mnemonic;
 	int i;
 
-	//‘¦’l
+	//å³å€¤
 	if(isNumeric(ptr) == 1){
 		return TYPE_VAL;
 	}
 
-	//–½—ß
+	//å‘½ä»¤
 	for(i = 0; strcmp(mnemonic_list[i].op_code_name, ""); i++){
 		if(strcmp(mnemonic_list[i].op_code_name, ptr) == 0){
 			return TYPE_OPERATION;
 		}
 	}
-	//‹[—–½—ß
+	//æ“¬ä¼¼å‘½ä»¤
 	for(i = 0; strcmp(ass_op_list[i].op_code_name, ""); i++){
 		if(strcmp(ass_op_list[i].op_code_name, ptr) == 0){
 			return TYPE_FAKE_OP;
 		}
 	}
-	//ƒŒƒWƒXƒ^"R?"
+	//ãƒ¬ã‚¸ã‚¹ã‚¿"R?"
 	for(i = 0; strcmp(register_list[i].reg_name, ""); i++){
 		if(strcmp(register_list[i].reg_name, ptr) == 0){
 			return TYPE_REGISTER;
 		}
 	}
-	//ƒƒ‚ƒŠ"*"
+	//ãƒ¡ãƒ¢ãƒª"*"
 	if(*ptr == '*'){
-		//ƒŒƒWƒXƒ^
+		//ãƒ¬ã‚¸ã‚¹ã‚¿
 		if(strstr(ptr, "R") != NULL){
 			return TYPE_MEM_R;
 		}else{
-		//‘¦’l
+		//å³å€¤
 			return TYPE_MEM_V;
 		}
 	}
 
-	//ƒ‰ƒxƒ‹’è‹`
+	//ãƒ©ãƒ™ãƒ«å®šç¾©
 	if(strstr(ptr, ":") != NULL){
-		//ƒ‰ƒxƒ‹–¼’†ŠÔƒf[ƒ^‚Ö“o˜^
+		//ãƒ©ãƒ™ãƒ«åä¸­é–“ãƒ‡ãƒ¼ã‚¿ã¸ç™»éŒ²
 		return TYPE_LABEL_DEF;
 	} else {
 		return TYPE_LABEL_REF;
@@ -628,17 +624,17 @@ int Assembler::toh_analysis(char *mnemonic){
 }
 
 /*============================================================================*
- *  ŠÖ”–¼
- *      ƒAƒZƒ“ƒuƒ‹Œ‹‰Êƒtƒ@ƒCƒ‹o—Í
- *  ŠT—v
- *      w’è‚µ‚½ƒtƒ@ƒCƒ‹‚ÉƒAƒZƒ“ƒuƒ‹Œ‹‰Ê‚ğo—Í‚·‚é
- *  ƒpƒ‰ƒƒ^à–¾
+ *  é–¢æ•°å
+ *      ã‚¢ã‚»ãƒ³ãƒ–ãƒ«çµæœãƒ•ã‚¡ã‚¤ãƒ«å‡ºåŠ›
+ *  æ¦‚è¦
+ *      æŒ‡å®šã—ãŸãƒ•ã‚¡ã‚¤ãƒ«ã«ã‚¢ã‚»ãƒ³ãƒ–ãƒ«çµæœã‚’å‡ºåŠ›ã™ã‚‹
+ *  ãƒ‘ãƒ©ãƒ¡ã‚¿èª¬æ˜
  *      
- *  –ß‚è’l
- *@@@@¬Œ÷ : 1   @¸”s : 0
+ *  æˆ»ã‚Šå€¤
+ *ã€€ã€€ã€€ã€€æˆåŠŸæ™‚ : 1   ã€€å¤±æ•—æ™‚ : 0
  *      
  *============================================================================*/
-int Assembler::toh_output_file(FILE *fp, int start, int end, unsigned short *mem){
+int output_file(FILE *fp, int start, int end, unsigned short *mem){
 	int		ret = 0;
 	int		i, j;
 	int		width, size;
@@ -646,17 +642,17 @@ int Assembler::toh_output_file(FILE *fp, int start, int end, unsigned short *mem
 
 	width = 16;
 	size = end - start;
-	//ƒtƒ@ƒCƒ‹o—Í
+	//ãƒ•ã‚¡ã‚¤ãƒ«å‡ºåŠ›
 
 	for(i = start_mc, j = 0; j < size; i++, j++) {
 		if(((j % 8) == 0) && (j > 0)){
 			fprintf(fp, "\n");
 		}
-		// ƒAƒhƒŒƒXo—Í
+		// ã‚¢ãƒ‰ãƒ¬ã‚¹å‡ºåŠ›
 		if ( (j & 0x7) == 0 ) {
 			fprintf(fp, "$%08x ", i);
 		}
-		// ƒf[ƒ^o—Í
+		// ãƒ‡ãƒ¼ã‚¿å‡ºåŠ›
 		fprintf(fp, "$%04x ", *(mem+i));
 	}
 	over = (8 - size % 8);
@@ -666,24 +662,4 @@ int Assembler::toh_output_file(FILE *fp, int start, int end, unsigned short *mem
 		}
 	}
 	return ret;
-}
-
-/*============================================================================*
- *  ŠÖ”–¼
- *      “à•”î•ñæ“¾
- *  ŠT—v
- *      
- *  ƒpƒ‰ƒƒ^à–¾
- *      
- *  –ß‚è’l
- *@@@@
- *============================================================================*/
-char*	Assembler::get_infilename()
-{
-	return m_infilename;
-}
-
-char*	Assembler::get_outfilename()
-{
-	return m_outfilename;
 }

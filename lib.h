@@ -1,13 +1,15 @@
 #include <iostream>
-#include <vcclr.h>
-#include "windows.h"
 
 using namespace std;
 
+#define strcpy_s(a, b, c) strcpy(a, c)
+#define strcat_s(a, b, c) strcat(a, c)
+#define strtok_s(a, b, c) strtok(a, b)
+#define strncpy_s(a,b,c,d) strncpy(a, c, d)
+#define strncat_s(a,b,c,d) strncat(a, c, d)
+
 unsigned long htoi(char *str);
-int String2Charp(System::String^ src, char **dst);
-System::String^ Charp2String(char *src);
-int Split(char *p_Splitstr, char *p_Delimiter);
+int Split(char *p_Splitstr, const char *p_Delimiter);
 int Replace(char *p_Src, char *p_a, char *p_b, char *io_Dst);
 char *Left(char *p_Src, int p_Len, char *io_Dst);
 char *Right(char *p_Src, int p_Len, char *io_Dst);
