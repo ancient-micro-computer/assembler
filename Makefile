@@ -1,16 +1,14 @@
-CC=emcc
-OBJS=assembler.o lib.o logutil.o
-assembler: $(OBJS)
-	$(CC) -o assembler.html $(OBJS)
+CC		= g++
+CPPFLAGS	= -Wall
+OBJS	= lib.o logutil.o assembler.o
+TARGET	= assembler
 
-assembler.o: assembler.cpp
-	$(CC) -c assembler.cpp
+all:	$(TARGET)
+$(TARGET): $(OBJS)
+	$(CC)  -o $(TARGET) $(OBJS)
 
-lib.o: lib.cpp
-	$(CC) -c lib.cpp
-
-logutil.o: logutil.cpp
-	$(CC) -c logutil.cpp
+%.cpp.o: %.cpp
+	$(CC) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	rm -f assembler.html assembler.js $(OBJS)
+	rm -f $(TARGET) $(OBJS)

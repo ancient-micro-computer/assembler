@@ -151,7 +151,7 @@ int main(int argc, char **argv){
 	}
 
 	//ファイルオープン
-	if((fp = fopen(filename,"r")) != 0 ){
+	if((fp = fopen(filename,"r")) == 0 ){
 		printf("ファイルオープンに失敗しました。\n");
 		return -1;
 	}
@@ -168,7 +168,7 @@ int main(int argc, char **argv){
 	strcpy_s(m_outfilename, 1024, filename);
 
 	//ファイルオープン
-	if((fp = fopen(filename,"w")) != 0 ){
+	if((fp = fopen(filename,"w")) == 0 ){
 		printf("ファイルオープンに失敗しました。\n");
 		return -2;
 	}
@@ -208,7 +208,6 @@ int assemble(FILE *fp){
 	int		last_pc, tmppc, code_chk;
 	char*	cur_mnemonic;
 	int		macro_recursive_block;		// マクロ循環参照防止チェックカウンタ
-	char*	nexttok = NULL;
 
 	log(LOG_INFO,"Assemble First analysis start\n");
 	//

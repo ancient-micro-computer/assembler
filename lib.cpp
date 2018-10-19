@@ -315,7 +315,7 @@ int StrScrape(char *inStr, char *outStr)
 #ifndef WIN32
 char    *itoa(int val, char *ibuf, int size)
 {
-    int v = 0, cnt=0;
+    int cnt=0;
 
     if (val == 0) {
         strcpy_s(ibuf, 2048, "0");
