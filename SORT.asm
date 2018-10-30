@@ -1,21 +1,21 @@
-// ƒ}ƒNƒ’è‹`
+// ãƒžã‚¯ãƒ­å®šç¾©
 .DEF	REG_SORT_MODE	r0
 .DEF	REG_START_ADR	r1
 .DEF	REG_END_ADR		r2
 
-.ORG	$0000	// IPLƒGƒŠƒA
+.ORG	$0000	// IPLã‚¨ãƒªã‚¢
 	mov		r0, 1
 	mov		r1, DATA_START
 	mov		r2, DATA_END
 	call	SORT_START
 	halt
 
-// Š„ž‚ÝƒxƒNƒ^Ý’è
+// å‰²è¾¼ã¿ãƒ™ã‚¯ã‚¿è¨­å®š
 .ORG	$0010
 .DS		1,	INT_TMR_SUB
 .DS		1,	INT_SWI_SUB
 
-.ORG	$1000	// ƒ†[ƒUƒGƒŠƒA
+.ORG	$1000	// ãƒ¦ãƒ¼ã‚¶ã‚¨ãƒªã‚¢
 SORT_ROUTINE_1:	mov	r3	r1
 LOOP_1_START:	cmp	r3	r2
 	brgt	LOOP_1_END
@@ -102,32 +102,32 @@ SORT_START:	push	r8
 	br	SORT_ROUTINE_END		
 
 INT_TMR_SUB:
-	DI					// Š„ž‚Ý‹ÖŽ~
+	DI					// å‰²è¾¼ã¿ç¦æ­¢
 	push	r1
 	push	r2
 	mov		r1, $ffff
-	sub		r1, $0100	// ƒ^ƒCƒ}[Š„ž‚Ý—vˆöƒNƒŠƒAƒ}ƒXƒN¶¬
-	and		INT, r1		// —vˆöƒNƒŠƒA
-	// ƒJƒEƒ“ƒ^XV
+	sub		r1, $0100	// ã‚¿ã‚¤ãƒžãƒ¼å‰²è¾¼ã¿è¦å› ã‚¯ãƒªã‚¢ãƒžã‚¹ã‚¯ç”Ÿæˆ
+	and		INT, r1		// è¦å› ã‚¯ãƒªã‚¢
+	// ã‚«ã‚¦ãƒ³ã‚¿æ›´æ–°
 	mov		r2,	G_TMR_CNT
 	mov		r1, *(r2), 0
 	inc		r1
 	mov		*(r2), r1
 	pop		r2
 	pop		r1
-	EI					// Š„ž‚Ý‹–‰Â
+	EI					// å‰²è¾¼ã¿è¨±å¯
 	RETI
 
 INT_SWI_SUB:
-	DI					// Š„ž‚Ý‹ÖŽ~
+	DI					// å‰²è¾¼ã¿ç¦æ­¢
 	push	r1
 	push	r2
 	mov		r1, $ffff
-	sub		r1, $0200	// SWŠ„ž‚Ý—vˆöƒNƒŠƒAƒ}ƒXƒN¶¬
-	and		INT, r1		// —vˆöƒNƒŠƒA
+	sub		r1, $0200	// SWå‰²è¾¼ã¿è¦å› ã‚¯ãƒªã‚¢ãƒžã‚¹ã‚¯ç”Ÿæˆ
+	and		INT, r1		// è¦å› ã‚¯ãƒªã‚¢
 	pop		r2
 	pop		r1
-	EI					// Š„ž‚Ý‹–‰Â
+	EI					// å‰²è¾¼ã¿è¨±å¯
 	RETI
 
 G_TMR_CNT:
