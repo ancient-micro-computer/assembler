@@ -1,6 +1,7 @@
 CC		= g++
 CPPFLAGS	= -Wall
 OBJS	= lib.o logutil.o assembler.o
+DEST	= /usr/local/bin
 TARGET	= assembler
 
 all:	$(TARGET)
@@ -12,3 +13,6 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(TARGET) $(OBJS)
+
+install:	$(TARGET)
+	cp -p $(TARGET) $(DEST)
