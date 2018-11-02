@@ -2,7 +2,7 @@ CC		= g++
 CPPFLAGS	= -Wall
 OBJS	= lib.o logutil.o assembler.o
 DEST	= /usr/local/bin
-TARGET	= ancientasm
+TARGET	= ancient-asm
 
 all:	$(TARGET)
 $(TARGET): $(OBJS)
